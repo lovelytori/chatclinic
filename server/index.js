@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { promises as fs } from 'fs';
 
-dotenv.config();
+dotenv.config({path: '../.env'});
 
 const app = express();
 app.use(cors());
