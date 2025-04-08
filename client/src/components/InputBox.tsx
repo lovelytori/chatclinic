@@ -5,9 +5,12 @@ function InputBox({ onSend }: { onSend: (message: string) => void }) {
   const [input, setInput] = useState('');
 
   const handleSend = () => {
-    if (!input.trim()) return;
-    onSend(input);
+    const messageToSend = input.trim();
+    if (!messageToSend) return;
+
+    // 순서 중요: 먼저 복사하고 → 초기화하고 → 보내기
     setInput('');
+    onSend(messageToSend);
   };
 
   return (
@@ -17,7 +20,12 @@ function InputBox({ onSend }: { onSend: (message: string) => void }) {
         placeholder="메시지를 입력하세요"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault(); // 이거 없으면 간혹 폼 제출되면서 꼬임
+            handleSend();
+          }
+        }}
       />
       <button
         className="bg-black text-white px-4 rounded-r"
@@ -28,5 +36,4 @@ function InputBox({ onSend }: { onSend: (message: string) => void }) {
     </div>
   );
 }
-
 export default InputBox;
