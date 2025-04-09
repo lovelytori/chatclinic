@@ -9,7 +9,14 @@ export default function App() {
   const [chatLog, setChatLog] = useState<
     { sender: string; message: string }[]
   >([]);
+  const [chat, setChat] = useState<ChatMessage[]>([]);
+  type BotType = 'monday' | 'gaebot';
 
+  interface ChatMessage {
+    id: string;
+    sender: BotType;
+    message: string;
+  }
   const handleSend = async (message: string) => {
     const userMsg = { sender: '나', message };
     setChatLog((prev) => [...prev, userMsg]);
@@ -40,9 +47,50 @@ export default function App() {
     }
   };
 
+  // 봇끼리 대화
+  async function startBotConversation(turns: number) {
+    console.log("turns:", turns);
+    let currentBot: BotType = Math.random() < 0.5 ? 'monday' : 'gaebot';
+    let lastMessage = '안녕! 오늘 기분 어때?';
+  
+    for (let i = 0; i < turns; i++) {
+      const reply = await callBot(currentBot, lastMessage);
+      appendToChat(currentBot, reply);
+  
+      await delay(1000);
+  
+      currentBot = currentBot === 'monday' ? 'gaebot' : 'monday';
+      lastMessage = reply;
+    }
+  }
+
+  async function callBot(bot: BotType, message: string): Promise<string> {
+    const response = await fetch(`/api/${bot}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    }).then((res) => res.json());
+  
+    //const data = await response.json();
+    return response.reply; // 너 백엔드에서 `reply` 키로 응답했으니까
+  }
+
+  function appendToChat(sender: BotType, message: string) {
+    setChat(prev => [...prev, {
+      id: crypto.randomUUID(), // or uuid()
+      sender,
+      message,
+    }]);
+  }
+
+  function delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-3xl font-bold mb-4">ChatClinic</h1>
+      <button onClick={() => startBotConversation(3)}>봇 대화 시작</button>
       <ChatWindow chatLog={chatLog} />
       <InputBox onSend={handleSend} />
     </div>
