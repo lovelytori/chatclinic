@@ -6,8 +6,8 @@ type Props = {
 };
 
 export default function MessageBubble({ sender, message }: Props) {
-  const isUser = sender === '나';
-  const isMonday = sender === '먼데이';
+  const isUser = sender === 'user';
+  const isMonday = sender === 'monday';
 
   const bubbleStyle = isUser
     ? 'bg-gray-300 text-black self-end'
