@@ -6,19 +6,17 @@ import ChatWindow from './components/ChatWindow';
 import InputBox from './components/InputBox';
 
 export default function App() {
-  const [chatLog, setChatLog] = useState<
-    { sender: string; message: string }[]
-  >([]);
-  const [chat, setChat] = useState<ChatMessage[]>([]);
+
+  const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
   type BotType = 'monday' | 'gaebot';
 
   interface ChatMessage {
     id: string;
-    sender: BotType;
+    sender: string;
     message: string;
   }
   const handleSend = async (message: string) => {
-    const userMsg = { sender: '나', message };
+    const userMsg = { id: crypto.randomUUID(), sender: '나', message };
     setChatLog((prev) => [...prev, userMsg]);
 
     // 서버에 메시지 보내기
@@ -39,8 +37,8 @@ export default function App() {
 
       setChatLog((prev) => [
         ...prev,
-        { sender: '먼데이', message: mondayRes.reply },
-        { sender: '개봇', message: gaebotRes.reply },
+        { id: crypto.randomUUID(),sender: '먼데이', message: mondayRes.reply },
+        { id: crypto.randomUUID(),sender: '개봇', message: gaebotRes.reply },
       ]);
     } catch (err) {
       console.error('API 에러:', err);
@@ -64,7 +62,7 @@ export default function App() {
     }
   }
 
-  async function callBot(bot: BotType, message: string): Promise<string> {
+  async function callBot(bot: string, message: string): Promise<string> {
     const response = await fetch(`/api/${bot}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -75,8 +73,8 @@ export default function App() {
     return response.reply; // 너 백엔드에서 `reply` 키로 응답했으니까
   }
 
-  function appendToChat(sender: BotType, message: string) {
-    setChat(prev => [...prev, {
+  function appendToChat(sender: string, message: string) {
+    setChatLog(prev => [...prev, {
       id: crypto.randomUUID(), // or uuid()
       sender,
       message,
