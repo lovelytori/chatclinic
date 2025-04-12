@@ -2,10 +2,11 @@ import React from 'react';
 
 type Props = {
   sender: string;
+  senderLabel: string;
   message: string;
 };
 
-export default function MessageBubble({ sender, message }: Props) {
+export default function MessageBubble({ sender, senderLabel, message }: Props) {
   const isUser = sender === 'user';
   const isMonday = sender === 'monday';
 
@@ -18,7 +19,7 @@ export default function MessageBubble({ sender, message }: Props) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}>
       <div className={`rounded-xl p-3 shadow-md max-w-[75%] ${bubbleStyle}`}>
-        <p className="text-xs font-semibold mb-1">{sender}</p>
+        <p className="text-xs font-semibold mb-1">{senderLabel}</p>
         <p className="whitespace-pre-wrap">{message}</p>
       </div>
     </div>

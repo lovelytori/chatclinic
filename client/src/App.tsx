@@ -9,8 +9,8 @@ export default function App() {
 
   const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
   type Sender = 'user' | 'monday' | 'gaebot';
-  const lastMessage = useRef('');
-  const lastSender = useRef<Sender>('gaebot');
+  // const lastMessage = useRef('');
+  // const lastSender = useRef<Sender>('gaebot');
   
   interface ChatMessage {
     id: string;
@@ -57,23 +57,24 @@ export default function App() {
   async function startBotConversation(turns: number) {
     let currentBot: Sender = Math.random() < 0.5 ? 'monday' : 'gaebot'; // 말을 시작할 봇 랜덤 선택
     // let lastMessage = '안녕! 오늘 기분 어때?';
-  
+    const lastSender = chatLog[chatLog.length-1].sender;
+    const lastMessage = chatLog[chatLog.length-1].message;
     for (let i = 0; i < turns; i++) {
+      console.log(i+":::"+lastSender+" > "+lastMessage);
       // 💡 상대방 말만 반응하도록
-    const inputMessage = lastSender.current === currentBot
+    const inputMessage = lastSender === currentBot
                             ? '...' // 자기 말이면 빈 입력 주거나 적절한 프롬프트
-                            : `상대가 이렇게 말했어: "${lastMessage}" 너는 어떻게 응답할래?`;
+                            : `${lastMessage}`;
 
       const reply = await callBot(currentBot, inputMessage);
       appendToChat(currentBot, reply);
   
-      lastMessage.current = reply;
-      lastSender.current = currentBot;
+      // lastMessage.current = reply;
+      // lastSender.current = currentBot;
 
       await delay(1000);
-  
       currentBot = currentBot === 'monday' ? 'gaebot' : 'monday';
-      lastMessage.current = reply;
+      // lastMessage.current = reply;
     }
   }
 
