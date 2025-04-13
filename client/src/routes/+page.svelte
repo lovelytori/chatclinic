@@ -6,7 +6,9 @@
     import type { ChatMessage, Sender } from '$lib/types';
   
     let chatLog: ChatMessage[] = [];
-  
+    let typing: 'monday' | 'gaebot' | null = null;
+    let target: 'monday' | 'gaebot' | 'both' = 'both';
+
     function appendToChat(sender: Sender, message: string) {
       chatLog = [...chatLog, {
         id: crypto.randomUUID(),
@@ -36,31 +38,80 @@
         const inputMessage = !last || last.sender === currentBot
           ? '...'
           : last.message;
-  
+        typing = currentBot;
         const reply = await callBot(currentBot, inputMessage);
         appendToChat(currentBot, reply);
+        typing = null;
         await delay(1000);
         currentBot = currentBot === 'monday' ? 'gaebot' : 'monday';
       }
     }
   
     async function handleSend(event: CustomEvent) {
-      const message = event.detail.message;
-  
-      appendToChat('user', message);
-  
+      const fullMessage = event.detail.message;
+      const { target, content } = parseTarget(fullMessage);
+
+      appendToChat('user', content);
+      message = getMessagePrefix(target);
+
       try {
-        const [mondayRes, gaebotRes] = await Promise.all([
-          callBot('monday', message),
-          callBot('gaebot', message),
-        ]);
-  
-        appendToChat('monday', mondayRes);
-        appendToChat('gaebot', gaebotRes);
+        if (target === 'monday') {
+      typing = 'monday';
+      const mondayRes = await callBot('monday', content);
+      appendToChat('monday', mondayRes);
+    } else if (target === 'gaebot') {
+      typing = 'gaebot';
+      const gaebotRes = await callBot('gaebot', content);
+      appendToChat('gaebot', gaebotRes);
+    } else if (target === 'both') {
+      typing = 'monday';
+      const mondayRes = await callBot('monday', content);
+      appendToChat('monday', mondayRes);
+
+      typing = 'gaebot';
+      const gaebotRes = await callBot('gaebot', content);
+      appendToChat('gaebot', gaebotRes);
+    }
+
+    typing = null;
+
+    
       } catch (err) {
         console.error('API 에러:', err);
+        typing = null;
       }
     }
+
+    function parseTarget(message: string): {
+  target: 'monday' | 'gaebot' | 'both',
+  content: string
+} {
+  if (message.startsWith('@개봇')) {
+    return { target: 'gaebot', content: message.replace('@개봇', '').trim() };
+  }
+  if (message.startsWith('@먼데이')) {
+    return { target: 'monday', content: message.replace('@먼데이', '').trim() };
+  }
+  if (message.startsWith('@all')) {
+    return { target: 'both', content: message.replace('@all', '').trim() };
+  }
+
+  // 아무 접두어도 없으면 기본은 둘 다
+  return { target: 'both', content: message.trim() };
+}
+
+let message = '';
+function updateMessage(val: string) {
+  message = val;
+  target = parseTarget(val).target;
+}
+function getMessagePrefix(target: 'monday' | 'gaebot' | 'both') {
+  return target === 'monday' ? '@먼데이 '
+       : target === 'gaebot' ? '@개봇 '
+       : target === 'both' ? ''
+       : '';
+}
+
   </script>
   
   <div class="min-h-screen bg-gray-100 p-6">
@@ -69,6 +120,14 @@
       봇 대화 시작
     </button>
     <ChatWindow {chatLog} />
-    <InputBox on:send={handleSend} />
+    {#if typing}
+    <p class="text-sm text-gray-500 mb-2">
+        {typing === 'monday' ? '먼데이' : '개봇'}이 입력 중...
+    </p>
+    {/if}
+    <p class="text-sm mb-2 text-gray-600">
+        현재 대상: {target === 'both' ? '모두' : target === 'monday' ? '먼데이' : '개봇'}
+    </p>
+    <InputBox {message} on:inputChange={(e) => updateMessage(e.detail)} on:send={handleSend} />
   </div>
   
